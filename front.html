@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Нефть</title>
+    <style>
+
+    .container {
+    display: flex;
+    justify-content: center;
+    align-items: end;
+    height: 60vh;
+    }
+    
+    .text {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .rectangle {
+        display: inline-block;
+        width: 300px;
+        height: 300px;
+        border: 2px solid black;
+        margin-right: 20px;
+        overflow: hidden;
+    }
+
+    #photoInput {
+        display: none;
+    }
+
+    #resultImage {
+        max-width: 100%;
+        max-height: 100%;
+    }
+    </style>
+</head>
+
+<body style="background-color: #f4e2e8; font-family:'Courier New', Courier, monospace; font-size: large;">
+<div class="container">
+    <div class="rectangle" id="originalRectangle">
+    <input type="file" id="photoInput" accept="image/*">
+    <label for="photoInput">Выбрать фото</label>
+    <img id="resultImage" src="#" style="display: none;">
+    </div>
+    <div class="rectangle" id="filteredRectangle">
+    <canvas id="canvas" width="300" height="300"></canvas>
+    </div>
+</div>
+    <div class="text">
+    <p>Есть ли нефть?</p>
+    </div>
+    <span id="answer" class="text"></span>
+
+    <script>
+    const originalRectangle = document.getElementById('originalRectangle');
+    const filteredRectangle = document.getElementById('filteredRectangle');
+    const photoInput = document.getElementById('photoInput');
+    const resultImage = document.getElementById('resultImage');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const answer = document.getElementById('answer');
+
+
+    photoInput.addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        resultImage.src = event.target.result;
+        applyOil(event.target.result);
+    };
+    reader.readAsDataURL(file);
+    });
+
+    function applyOil(imageSrc) {
+        document.getElementById("resultImage").style.display='block';
+        const img = new Image();
+        img.onload = function() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < imageData.data.length; i += 4) {
+        const avg = (imageData.data[i] + imageData.data[i + 1] + imageData.data[i + 2]) / 3;
+        /*
+        imageData.data[i] = avg < 128 ? 0 : 255; // R
+        imageData.data[i + 1] = avg < 128 ? 0 : 255; // G
+        imageData.data[i + 2] = avg < 128 ? 0 : 255; // B
+        */
+    }
+    ctx.putImageData(imageData, 0, 0);
+    checkOil();
+    };
+    img.src = imageSrc;
+    }
+
+    function checkOil() {
+    // const filteredData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    // let isOil = true;
+    // for (let i = 0; i < filteredData.length; i += 4) {
+    //     if (filteredData[i] !== 0 || filteredData[i + 1] !== 0 || filteredData[i + 2] !== 255) {
+    //         isOil = false;
+    //     break;
+    // }
+    // }
+        const input = document.getElementById("photoInput");
+        if (input.files.length === 0) {
+            console.error('No file selected.');
+        return;
+        }
+        const file = input.files[0];
+        const formData = new FormData();
+        formData.append('image', file);
+        fetch('http://127.0.0.1:8000/', {
+        method: 'POST',
+        body: formData
+        })
+        .then(response => response.json())
+        .then(data => {answer.textContent = data.answer ? 'Да' : 'Нет';})
+        .catch(error => console.error('Error:', error));  
+    }
+    </script>
+</body>
+</html> 
