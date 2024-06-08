@@ -6,12 +6,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Нефть</title>
     <style>
+    .for-selector {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    }
 
     .container {
     display: flex;
     justify-content: center;
     align-items: end;
-    height: 60vh;
+    position: relative;
+    z-index: 0;
+    margin-top: 100px; 
     }
     
     .text {
@@ -41,10 +53,17 @@
 </head>
 
 <body style="background-color: #f4e2e8; font-family:'Courier New', Courier, monospace; font-size: large;">
+<div class="for-selector">
+    <select name="model" id="model-select">
+    <option value="ssd">SSD300</option>
+    <option value="DeepLab">DeepLabV3/DeepLabV3+</option>
+    </select>
+</div>
+
 <div class="container">
     <div class="rectangle" id="originalRectangle">
     <input type="file" id="photoInput" accept="image/*">
-    <label for="photoInput">Выбрать фото</label>
+    <label for="photoInput">Выберите фото</label>
     <img id="resultImage" src="#" style="display: none;">
     </div>
     <div class="rectangle" id="filteredRectangle">
@@ -55,6 +74,8 @@
     <p>Есть ли нефть?</p>
     </div>
     <span id="answer" class="text"></span>
+    <span id="area" class="text">Площадь загрязнения: 163.56м^2</span>
+    <span id="area" class="text">Примерная стоимость очистки: 3474000 руб</span>
 
     <script>
     const originalRectangle = document.getElementById('originalRectangle');
@@ -85,11 +106,6 @@
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         for (let i = 0; i < imageData.data.length; i += 4) {
         const avg = (imageData.data[i] + imageData.data[i + 1] + imageData.data[i + 2]) / 3;
-        /*
-        imageData.data[i] = avg < 128 ? 0 : 255; // R
-        imageData.data[i + 1] = avg < 128 ? 0 : 255; // G
-        imageData.data[i + 2] = avg < 128 ? 0 : 255; // B
-        */
     }
     ctx.putImageData(imageData, 0, 0);
     checkOil();
@@ -98,14 +114,6 @@
     }
 
     function checkOil() {
-    // const filteredData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-    // let isOil = true;
-    // for (let i = 0; i < filteredData.length; i += 4) {
-    //     if (filteredData[i] !== 0 || filteredData[i + 1] !== 0 || filteredData[i + 2] !== 255) {
-    //         isOil = false;
-    //     break;
-    // }
-    // }
         const input = document.getElementById("photoInput");
         if (input.files.length === 0) {
             console.error('No file selected.');
