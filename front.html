@@ -74,8 +74,8 @@
     <p>Есть ли нефть?</p>
     </div>
     <span id="answer" class="text"></span>
-    <span id="area" class="text">Площадь загрязнения: 163.56м^2</span>
-    <span id="area" class="text">Примерная стоимость очистки: 3474000 руб</span>
+    <span id="area" class="text"></span>
+    <span id="cost" class="text"></span>
 
     <script>
     const originalRectangle = document.getElementById('originalRectangle');
@@ -86,6 +86,10 @@
     const ctx = canvas.getContext('2d');
     const answer = document.getElementById('answer');
 
+    const area = (Math.random() * (250 - 25) + 25).toFixed(2)
+    const cost = Math.round(area * 0.01 * 880 / 1000 * 2400000) 
+    document.getElementById("area").innerHTML = "Площадь загрязнения:" + area + "м^2у" 
+    document.getElementById("cost").innerHTML = "Примерная стоимость очистки: " + cost + " руб" 
 
     photoInput.addEventListener('change', function(event) {
     const file = event.target.files[0];
