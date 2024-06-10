@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 
+#amogus
 app = FastAPI()
 origins = ["*"]
 app.add_middleware(
