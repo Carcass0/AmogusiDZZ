@@ -10,7 +10,7 @@ def save_some_examples(gen, val_loader, epoch, folder):
     gen.eval()
     with torch.no_grad():
         y_fake = gen(x)
-        y_fake = y_fake * 0.5 + 0.5 # remove normalization
+        y_fake = y_fake * 0.5 + 0.5
         save_image(y_fake, folder + f"/y_gen_{epoch}.png")
         save_image(x * 0.5 + 0.5, folder + f"/input_{epoch}.png")
         save_image(y * 0.5 + 0.5, folder + f"/label_{epoch}.png")
@@ -30,7 +30,5 @@ def load_checkpoint(checkpoint_file, model, optimizer, lr):
     model.load_state_dict(checkpoint["state_dict"])
     optimizer.load_state_dict(checkpoint["optimizer"])
 
-    # If we don't do this then it will just have learning rate of old checkpoint
-    # and it will lead to many hours of debugging
     for param_group in optimizer.param_groups:
         param_group["lr"] = lr

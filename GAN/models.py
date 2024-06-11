@@ -1,9 +1,7 @@
 import torch
 import torch.nn as nn
 
-##################################################################################
-#################################### DISCRIMINATOR ###############################
-##################################################################################
+
 class CNN_Block(nn.Module):
     def __init__(self, in_channels, out_channels, stride=2):
         super().__init__()
@@ -36,15 +34,11 @@ class Discriminator(nn.Module):
         )
         self.model = nn.Sequential(*layers)
     def forward(self, x, y):
-        ### X = Correct Satellite Image
-        ### Y = Correct/Fake Image
         x = torch.cat([x, y], dim=1)
         x = self.initial(x)
         return self.model(x)
 
-##################################################################################
-#################################### GENERATOR ###################################
-##################################################################################
+
 class Block(nn.Module):
     def __init__(self, in_channels, out_channels, down=True, act="relu", use_dropout=False):
         super().__init__()
@@ -69,25 +63,18 @@ class Generator(nn.Module):
             nn.LeakyReLU(0.2)
         ) # 128 X 128
 
-        ######################################################################
-        ################################ ENCODER #############################
-        ######################################################################
         self.down1 = Block(features, features*2, down=True, act="leaky", use_dropout=False)   # 64 X 64
         self.down2 = Block(features*2, features*4, down=True, act="leaky", use_dropout=False) # 32 X 32
         self.down3 = Block(features*4, features*8, down=True, act="leaky", use_dropout=False) # 16 X 16
         self.down4 = Block(features*8, features*8, down=True, act="leaky", use_dropout=False) # 8 X 8
         self.down5 = Block(features*8, features*8, down=True, act="leaky", use_dropout=False) # 4 X 4
         self.down6 = Block(features*8, features*8, down=True, act="leaky", use_dropout=False) # 2 X 2
-        #####################################################################
-        ############################ BOTTLENECK #############################
-        #####################################################################
+
         self.bottleneck = nn.Sequential(
             nn.Conv2d(features*8, features*8, 4, 2, 1, padding_mode="reflect"), # 1 X 1
             nn.ReLU()
         )
-        #####################################################################
-        ############################ DECODER ################################
-        #####################################################################
+
         self.up1 = Block(features*8, features*8, down=False, act="relu", use_dropout=True)
         self.up2 = Block(features*8*2, features*8, down=False, act="relu", use_dropout=True)
         self.up3 = Block(features*8*2, features*8, down=False, act="relu", use_dropout=True)

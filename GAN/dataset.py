@@ -7,7 +7,6 @@ from torchvision.utils import save_image
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
-################## Augmentations ##############
 both_transform = A.Compose(
     [A.Resize(width=256, height=256),], additional_targets={"image0": "image"},
 )
@@ -34,11 +33,8 @@ class Satellite2Map_Data(Dataset):
         self.lbls_root = lbls_root
         list_imgs_files = os.listdir(self.imgs_root)
         list_lbls_files = os.listdir(self.lbls_root)
-        # The images were numerically (in the name) sorted
         list_imgs_files.sort()
         list_lbls_files.sort()
-        #### Removing '.ipynb_checkpoints' from the list
-        # list_files.remove('.ipynb_checkpoints')
         self.n_images = list_imgs_files
         self.n_labels = list_lbls_files
 
@@ -49,11 +45,10 @@ class Satellite2Map_Data(Dataset):
         try:
             if torch.is_tensor(idx):
                 idx = idx.tolist()
-            # Open satellite image
             sat_image_name = self.n_images[idx]
             sat_image_path = os.path.join(self.imgs_root, sat_image_name)
             sat_image = np.asarray(Image.open(sat_image_path).convert('RGB'))
-            # Open segmentation image
+
             map_image_name = self.n_labels[idx]
             map_image_path = os.path.join(self.lbls_root, map_image_name)
             map_image = np.asarray(Image.open(map_image_path).convert('RGB'))
