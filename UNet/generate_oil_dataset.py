@@ -1,8 +1,8 @@
 import os
+import shutil
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
-from multiprocessing import Pool, cpu_count
 
 def save_img_color(img, path='.', form='png'):
     if not os.path.exists(path + '.' + form):
@@ -13,19 +13,6 @@ def save_img_color(img, path='.', form='png'):
         fig.savefig(path, format=form)
         plt.close(fig)
 
-def process_img(args):
-    in_folder, out_folder, im = args
-    img = np.array(Image.open(os.path.join(in_folder, im)), dtype=np.uint8)
-    index = 0
-    for i in range(0, 620, 320):
-        for j in range(0, 1240, 310):
-            out_path = os.path.join(out_folder, im + '_' + str(index) + '.jpg')
-            if not os.path.exists(out_path):
-                ix = img[i:i+320, j:j+320, :]
-                save_img_color(ix, out_folder+im+'_'+str(index), 'jpg')
-            index += 1
-    return im
-
 def gen_img_320_overlap(in_folder, out_folder):
     files = os.listdir(in_folder)
     total_files = len(files)
@@ -33,35 +20,20 @@ def gen_img_320_overlap(in_folder, out_folder):
     
     print(f"Total images to process: {total_files}")
     print(f"Images already generated: {generated_files}")
-
-    with Pool(cpu_count()) as pool:
-        for idx, _ in enumerate(pool.imap_unordered(process_img, [(in_folder, out_folder, im) for im in files])):
-            generated_files += 1
-            if generated_files % 10 == 0:
-                print(f"{generated_files} images generated.")
-
-def process_label(args):
-    in_folder, out_folder, im = args
-    img = np.array(Image.open(os.path.join(in_folder, im)), dtype=np.uint8)
-    out_label = np.zeros((img.shape[0], img.shape[1], 5), dtype=np.uint8)
     
-    for i in range(0, img.shape[0]):
-        for j in range(0, img.shape[1]):
-            if (img[i,j,:] == [51,221,225]).all():
-                out_label[i,j,0] = 1
-            if (img[i,j,:] == [255,0,124]).all():
-                out_label[i,j,1] = 1
-            if (img[i,j,:] == [255,0,124]).all():
-                out_label[i,j,2] = 1
-            if (img[i,j,:] == [153,76,0]).all():
-                out_label[i,j,3] = 1
-            if (img[i,j,:] == [255,204,51]).all():
-                out_label[i,j,4] = 1
-
-    out_path = os.path.join(out_folder, im + '.npy')
-    if not os.path.exists(out_path):
-        np.save(out_path, out_label)
-    return im
+    for idx, im in enumerate(files):
+        img = np.array(Image.open(in_folder + im), dtype=np.uint8)
+        index = 0
+        for i in range(0, 620, 320):
+            for j in range(0, 1240, 310):
+                out_path = out_folder + im + '_' + str(index) + '.jpg'
+                if not os.path.exists(out_path):
+                    ix = img[i:i+320, j:j+320, :]
+                    save_img_color(ix, out_folder+im+'_'+str(index), 'jpg')
+                    generated_files += 1
+                    if generated_files % 10 == 0:
+                        print(f"{generated_files} images generated.")
+                index += 1
 
 def gen_label_5D(in_folder, out_folder):
     files = os.listdir(in_folder)
@@ -70,25 +42,30 @@ def gen_label_5D(in_folder, out_folder):
     
     print(f"Total labels to process: {total_files}")
     print(f"Labels already generated: {generated_files}")
+    
+    for idx, im in enumerate(files):
+        img = np.array(Image.open(in_folder + im), dtype=np.uint8)
+        out_label = np.zeros((img.shape[0], img.shape[1], 5), dtype=np.uint8)
+        
+        for i in range(0, img.shape[0]):
+            for j in range(0, img.shape[1]):
+                if (img[i,j,:] == [51,221,225]).all():
+                    out_label[i,j,0] = 1
+                if (img[i,j,:] == [255,0,124]).all():
+                    out_label[i,j,1] = 1
+                if (img[i,j,:] == [255,0,124]).all():
+                    out_label[i,j,2] = 1
+                if (img[i,j,:] == [153,76,0]).all():
+                    out_label[i,j,3] = 1
+                if (img[i,j,:] == [255,204,51]).all():
+                    out_label[i,j,4] = 1
 
-    with Pool(cpu_count()) as pool:
-        for idx, _ in enumerate(pool.imap_unordered(process_label, [(in_folder, out_folder, im) for im in files])):
+        out_path = out_folder + im + '.npy'
+        if not os.path.exists(out_path):
+            np.save(out_path, out_label)
             generated_files += 1
             if generated_files % 10 == 0:
                 print(f"{generated_files} labels generated.")
-
-def process_label_320_overlap(args):
-    in_folder, out_folder, im = args
-    img = np.load(os.path.join(in_folder, im))
-    index = 0
-    for i in range(0, 620, 320):
-        for j in range(0, 1240, 310):
-            out_path = os.path.join(out_folder, im.replace('.npy', '') + '_' + str(index) + '.npy')
-            if not os.path.exists(out_path):
-                ix = img[i:i+320, j:j+320, :]
-                np.save(out_path, ix)
-            index += 1
-    return im
 
 def gen_label_5D_320_overlap(in_folder, out_folder):
     files = os.listdir(in_folder)
@@ -97,25 +74,20 @@ def gen_label_5D_320_overlap(in_folder, out_folder):
     
     print(f"Total label tiles to process: {total_files}")
     print(f"Label tiles already generated: {generated_files}")
-
-    with Pool(cpu_count()) as pool:
-        for idx, _ in enumerate(pool.imap_unordered(process_label_320_overlap, [(in_folder, out_folder, im) for im in files])):
-            generated_files += 1
-            if generated_files % 10 == 0:
-                print(f"{generated_files} label tiles generated.")
-
-def process_flip_img(args):
-    in_folder, out_folder, im = args
-    img = np.array(Image.open(os.path.join(in_folder, im)), dtype=np.uint8)
-    img_h = np.flip(img, 0)
-    img_o = np.flip(img, 1)
-    img_ho = np.flip(img)
     
-    save_img_color(img, os.path.join(out_folder, im), form='jpg')
-    save_img_color(img_h, os.path.join(out_folder, im + '_h'), form='jpg')
-    save_img_color(img_o, os.path.join(out_folder, im + '_o'), form='jpg')
-    save_img_color(img_ho, os.path.join(out_folder, im + '_ho'), form='jpg')
-    return im
+    for idx, im in enumerate(files):
+        img = np.load(in_folder + im)
+        index = 0
+        for i in range(0, 620, 320):
+            for j in range(0, 1240, 310):
+                out_path = out_folder + im.replace('.npy', '') + '_' + str(index) + '.npy'
+                if not os.path.exists(out_path):
+                    ix = img[i:i+320, j:j+320, :]
+                    np.save(out_path, ix)
+                    generated_files += 1
+                    if generated_files % 10 == 0:
+                        print(f"{generated_files} label tiles generated.")
+                index += 1
 
 def gen_flip_img(in_folder, out_folder):
     files = os.listdir(in_folder)
@@ -124,25 +96,32 @@ def gen_flip_img(in_folder, out_folder):
     
     print(f"Total images to flip: {total_files}")
     print(f"Flipped images already generated: {generated_files}")
-
-    with Pool(cpu_count()) as pool:
-        for idx, _ in enumerate(pool.imap_unordered(process_flip_img, [(in_folder, out_folder, im) for im in files])):
-            generated_files += 1
-            if generated_files % 10 == 0:
-                print(f"{generated_files} flipped images generated.")
-
-def process_flip_label(args):
-    in_folder, out_folder, im = args
-    img = np.load(os.path.join(in_folder, im))
-    img_h = np.flip(img, 0)
-    img_o = np.flip(img, 1)
-    img_ho = np.flip(img)
     
-    np.save(os.path.join(out_folder, im), img)
-    np.save(os.path.join(out_folder, im.replace('.npy', '_h')), img_h.astype(np.uint8))
-    np.save(os.path.join(out_folder, im.replace('.npy', '_o')), img_o.astype(np.uint8))
-    np.save(os.path.join(out_folder, im.replace('.npy', '_ho')), img_ho.astype(np.uint8))
-    return im
+    for idx, im in enumerate(files):
+        img = np.array(Image.open(in_folder + im), dtype=np.uint8)
+        img_h = np.zeros((img.shape), dtype=np.uint8)
+        img_o = np.zeros((img.shape), dtype=np.uint8)
+        img_ho = np.zeros((img.shape), dtype=np.uint8)
+        for i in range(0, img.shape[-1]):
+            img_h[..., i] = np.flip(img[..., i], 0)
+            img_o[..., i] = np.flip(img[..., i], 1)
+            img_ho[..., i] = np.flip(img[..., i])
+        
+        if not os.path.exists(out_folder + im + '.jpg'):
+            save_img_color(img, out_folder + im, form='jpg')
+            generated_files += 1
+        if not os.path.exists(out_folder + im + '_h.jpg'):
+            save_img_color(img_h.astype(np.uint8), out_folder + im + '_h', form='jpg')
+            generated_files += 1
+        if not os.path.exists(out_folder + im + '_o.jpg'):
+            save_img_color(img_o.astype(np.uint8), out_folder + im + '_o', form='jpg')
+            generated_files += 1
+        if not os.path.exists(out_folder + im + '_ho.jpg'):
+            save_img_color(img_ho.astype(np.uint8), out_folder + im + '_ho', form='jpg')
+            generated_files += 1
+        
+        if generated_files % 10 == 0:
+            print(f"{generated_files} flipped images generated.")
 
 def gen_flip_label(in_folder, out_folder):
     files = os.listdir(in_folder)
@@ -151,12 +130,32 @@ def gen_flip_label(in_folder, out_folder):
     
     print(f"Total labels to flip: {total_files}")
     print(f"Flipped labels already generated: {generated_files}")
-
-    with Pool(cpu_count()) as pool:
-        for idx, _ in enumerate(pool.imap_unordered(process_flip_label, [(in_folder, out_folder, im) for im in files])):
+    
+    for idx, im in enumerate(files):
+        img = np.load(in_folder + im)
+        img_h = np.zeros(img.shape, dtype=np.uint8)
+        img_o = np.zeros(img.shape, dtype=np.uint8)
+        img_ho = np.zeros(img.shape, dtype=np.uint8)
+        for i in range(0, img.shape[-1]):
+            img_h[..., i] = np.flip(img[..., i], 0)
+            img_o[..., i] = np.flip(img[..., i], 1)
+            img_ho[..., i] = np.flip(img[..., i])
+        
+        if not os.path.exists(out_folder + im):
+            np.save(out_folder + im, img)
             generated_files += 1
-            if generated_files % 10 == 0:
-                print(f"{generated_files} flipped labels generated.")
+        if not os.path.exists(out_folder + im.replace('.npy', '_h.npy')):
+            np.save(out_folder + im.replace('.npy', '_h'), img_h.astype(np.uint8))
+            generated_files += 1
+        if not os.path.exists(out_folder + im.replace('.npy', '_o.npy')):
+            np.save(out_folder + im.replace('.npy', '_o'), img_o.astype(np.uint8))
+            generated_files += 1
+        if not os.path.exists(out_folder + im.replace('.npy', '_ho.npy')):
+            np.save(out_folder + im.replace('.npy', '_ho'), img_ho.astype(np.uint8))
+            generated_files += 1
+        
+        if generated_files % 10 == 0:
+            print(f"{generated_files} flipped labels generated.")
 
 if __name__ == "__main__":
     print('Start...')
@@ -179,7 +178,7 @@ if __name__ == "__main__":
     TEST_ORIGINAL_INPUT_PATH      = ORIGINAL_DATASET_FOLDER + 'test/images/'
     TEST_TILE_LABEL_PATH          = PREPROCESSED_DATASET_FOLDER + 'test_label_tile/'
     TEST_TILE_INPUT_PATH          = PREPROCESSED_DATASET_FOLDER + 'test_tile/'
-    if augment_test_data:
+    if (augment_test_data == True):
         TEST_AUGMENTED_LABEL_PATH     = PREPROCESSED_DATASET_FOLDER + 'test_label_tile_aug/'
         TEST_AUGMENTED_INPUT_PATH     = PREPROCESSED_DATASET_FOLDER + 'test_tile_aug/'
     
@@ -193,7 +192,7 @@ if __name__ == "__main__":
         os.makedirs(TEST_CONVERTED_LABEL_PATH, exist_ok=True)
         os.makedirs(TEST_TILE_LABEL_PATH, exist_ok=True)
         os.makedirs(TEST_TILE_INPUT_PATH, exist_ok=True)
-        if augment_test_data:
+        if (augment_test_data == True):
             os.makedirs(TEST_AUGMENTED_LABEL_PATH, exist_ok=True)
             os.makedirs(TEST_AUGMENTED_INPUT_PATH, exist_ok=True)
     except Exception as ex:
