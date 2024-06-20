@@ -33,10 +33,18 @@ class Discriminator(nn.Module):
             )
         )
         self.model = nn.Sequential(*layers)
+
+        self.classifier = nn.Sequential(
+            nn.Conv2d(features[-1], 1, kernel_size=3, stride=1, padding=1),
+            nn.Sigmoid()
+        )
+
     def forward(self, x, y):
         x = torch.cat([x, y], dim=1)
         x = self.initial(x)
-        return self.model(x)
+        output = self.model(x)
+        class_output = self.classifier(x)
+        return output, class_output
 
 
 class Block(nn.Module):
@@ -104,3 +112,35 @@ class Generator(nn.Module):
         up7 = self.up7(torch.cat([up6, d2], 1))
 
         return self.final_up(torch.cat([up7, d1], 1))
+    
+class Classifier(nn.Module):
+    def __init__(self, in_channels=3):
+        super().__init__()
+        self.model = nn.Sequential(
+            nn.Conv2d(in_channels, 64, 3, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Conv2d(64, 128, 3, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Conv2d(128, 256, 3, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Conv2d(256, 512, 3, padding=1),
+            nn.BatchNorm2d(512),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Flatten(),
+            nn.Linear(512 * 16 * 16, 1024),
+            nn.ReLU(),
+            nn.Linear(1024, 512),
+            nn.ReLU(),
+            nn.Linear(512, 1),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        return self.model(x)

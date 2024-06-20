@@ -16,7 +16,7 @@ def save_some_examples(gen, val_loader, epoch, folder):
         save_image(y * 0.5 + 0.5, folder + f"/label_{epoch}.png")
     gen.train()
 
-def save_checkpoint(model, optimizer, filename="my_checkpoint.pth.tar"):
+def save_checkpoint(model, optimizer, filename="%Y-%m-%d_%H-%M_GAN.pth.tar"):
     print("=> Saving checkpoint")
     checkpoint = {
         "state_dict": model.state_dict(),

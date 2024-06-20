@@ -209,9 +209,8 @@ if __name__ == '__main__':
 
     create_folders()
 
-    # Загрузка модели и весов
     model = torch.load(args.model_name[0])
-    model.eval()  # переключение модели в режим оценки
+    model.eval()
 
     print('\n\nModel loaded.')
     print('Model name:          ', args.model_name[0])

@@ -17,3 +17,4 @@ LOAD_MODEL = False
 SAVE_MODEL = True
 CHECKPOINT_DISC = "disc.pth.tar"
 CHECKPOINT_GEN = "gen.pth.tar"
+CLASSIFICATION_LAMBDA = 1

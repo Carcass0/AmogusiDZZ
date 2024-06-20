@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inference App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+</head>
+
+<body>
+    <div class="container-main">
+        <div id="left" class="container">
+            <label for="upload" class="file-upload-label" id="file-label">Выбрать файл</label>
+            <input type="file" id="upload">
+            <img id="selected-img" src="" alt="Selected Image" style="display: none;">
+        </div>
+        <div id="middle" class="container">
+            <canvas id="canvas" style="display: none;"></canvas>
+            <img id="result-img" src="" alt="Result Image">
+        </div>
+        <div id="right" class="container">
+            <div id="right-top">
+                <p>Точность: <span id="confidence"></span></p>
+                <p>Площадь: <span id="oil-amount"></span></p>
+            </div>
+            <div id="right-bottom">
+                <div class="option">
+                    <input type="radio" id="option1" name="option" value="option1" checked>
+                    <label for="option1">U-Net</label><br>
+                </div>
+                <div class="option">
+                    <input type="radio" id="option2" name="option" value="option2">
+                    <label for="option2">GAN</label><br><br>
+                </div>
+                <button id="reset-btn">Сбросить</button>
+            </div>
+        </div>
+    </div>
+    <button id="upload-btn" class="centered-button">Загрузить и развернуть</button>
+    <script>
+        document.getElementById('upload').addEventListener('change', function () {
+            const fileInput = document.getElementById('upload');
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.getElementById('selected-img');
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    document.getElementById('file-label').style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById('upload-btn').addEventListener('click', function () {
+            const fileInput = document.getElementById('upload');
+            const file = fileInput.files[0];
+            const option = document.querySelector('input[name="option"]:checked').value;
+            if (file) {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('option', option);
+
+                fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        const img = new Image();
+                        img.onload = function () {
+                            const canvas = document.getElementById('canvas');
+                            const ctx = canvas.getContext('2d');
+
+                            const originalWidth = img.width;
+                            const originalHeight = img.height;
+
+                            const leftCrop = 143;
+                            const rightCrop = 127;
+                            const topCrop = 59;
+                            const bottomCrop = 53;
+
+                            const croppedWidth = originalWidth - (leftCrop + rightCrop);
+                            const croppedHeight = originalHeight - (topCrop + bottomCrop);
+
+                            canvas.width = croppedWidth;
+                            canvas.height = croppedHeight;
+
+                            ctx.drawImage(img, leftCrop, topCrop, croppedWidth, croppedHeight, 0, 0, croppedWidth, croppedHeight);
+
+                            const resultImg = document.getElementById('result-img');
+                            resultImg.src = canvas.toDataURL('image/png');
+                        };
+                        img.src = 'data:image/png;base64,' + data.image;
+                        document.getElementById('confidence').textContent = data.confidence;
+                        document.getElementById('oil-amount').textContent = data.oil_amount;
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+        });
+
+        document.getElementById('reset-btn').addEventListener('click', function () {
+            document.getElementById('result-img').src = '';
+            document.getElementById('confidence').textContent = '';
+            document.getElementById('oil-amount').textContent = '';
+            const fileInput = document.getElementById('upload');
+            fileInput.value = '';
+            fileInput.style.display = 'block';
+            document.getElementById('selected-img').style.display = 'none';
+            document.getElementById('file-label').style.display = 'inline-block';
+        });
+    </script>
+</body>
+
+</html>

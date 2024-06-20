@@ -1,8 +1,8 @@
 import os
 from PIL import Image
 from tqdm import tqdm
-ORIG_DIR = "/home/est_posgrado_manuel.suarez/data/oil-spill-dataset"
-DEST_DIR = "/home/est_posgrado_manuel.suarez/data/oil-spill-dataset_256"
+ORIG_DIR = "/home/data/oil-spill-dataset"
+DEST_DIR = "/home/data/oil-spill-dataset_256"
 
 def split_images(origin, dest, size, prefix, ext):
     os.makedirs(dest, exist_ok=True)
