@@ -65,7 +65,7 @@ def upload_file():
             output = gan_model(img_tensor)
             
             result_img = output_to_rgb(output[0], img_tensor[0])
-            mask = None
+            mask = pred
             metrics = {'confidence': 0.85, 'oil_amount': 250.0}
 
     buffered = io.BytesIO()
